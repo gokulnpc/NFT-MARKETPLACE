@@ -18,9 +18,14 @@ export default function Profile(props) {
         const items = await Promise.all(transaction.map(async i => {
             const tokenURI = await contract.tokenURI(i.tokenId);
 
-            //change to token uri
-            let meta = await axios(tokenURI);
+            let meta = await axios(tokenURI, {
+                method: 'GET',  // Sending a POST request
+                mode: 'cors'
+            });
+
             meta = meta.data;
+            let image = getIPFSGatewayURL(meta.image);
+            console.log("image url: " + image);
 
             let price = ethers.utils.formatUnits(i.price.toString(), 'ether');
             console.log("price", Number(price))
@@ -29,7 +34,7 @@ export default function Profile(props) {
                 tokenId: i.tokenId.toNumber(),
                 seller: i.seller,
                 owner: i.owner,
-                image: meta.image,
+                image: image,
                 name: meta.name,
                 description: meta.description,
             }
@@ -48,6 +53,11 @@ export default function Profile(props) {
     if (!dataFetched)
         getNFTData(tokenId);
 
+    const getIPFSGatewayURL = (ipfsURL) => {
+        let urlArray = ipfsURL.split("/");
+        let ipfsGateWayURL = `https://${urlArray[2]}.ipfs.dweb.link/${urlArray[3]}`;
+        return ipfsGateWayURL;
+    }
     return (
         <div>
 

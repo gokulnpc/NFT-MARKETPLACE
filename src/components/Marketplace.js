@@ -14,22 +14,23 @@ export default function Marketplace(props) {
         const items = await Promise.all(transaction.map(async i => {
             const tokenURI = await contract.tokenURI(i.tokenId);
 
-            console.log("token", tokenURI)
             // let meta = await axios.get(tokenURI);
             console.log("tokenURI", tokenURI)
+
             let meta = await axios(tokenURI, {
-                method: 'GET',  // Sending a POST request
+                method: 'GET',
                 mode: 'cors'
             });
             meta = meta.data;
-            console.log("metadata: " + meta);
+            let image = getIPFSGatewayURL(meta.image);
+            console.log("image url: " + image);
             let price = ethers.utils.formatUnits(i.price.toString(), 'ether');
             let item = {
                 price,
                 tokenId: i.tokenId.toNumber(),
                 seller: i.seller,
                 owner: i.owner,
-                image: meta.image,
+                image: image,
                 name: meta.name,
                 description: meta.description,
             }
@@ -43,7 +44,11 @@ export default function Marketplace(props) {
         getAllNFTs();
     }
 
-
+    const getIPFSGatewayURL = (ipfsURL) => {
+        let urlArray = ipfsURL.split("/");
+        let ipfsGateWayURL = `https://${urlArray[2]}.ipfs.dweb.link/${urlArray[3]}`;
+        return ipfsGateWayURL;
+    }
     return (
         <div>
             <div>

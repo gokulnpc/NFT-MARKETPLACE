@@ -10,7 +10,7 @@ function NFTTile(data) {
         <>
             <div class="col">
                 <div class="card h-100">
-                    <img src={data.data.image} class="card-img-top" alt="..." />
+                    <img src={data.data.image} class="card-img-top tileimg" alt="..." />
                     <div class="card-body">
                         <h5 class="card-title">{data.data.name}</h5>
                         <p class="card-text">{data.data.description}</p>

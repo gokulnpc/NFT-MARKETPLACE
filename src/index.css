@@ -40,3 +40,10 @@ body {
     float: none;
     margin: 0 auto;
 }
+
+.tileimg {
+    width: 200px;
+    /* You can set the dimensions to whatever you want */
+    height: 200px;
+    object-fit: cover;
+}

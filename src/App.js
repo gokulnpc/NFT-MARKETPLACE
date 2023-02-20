@@ -43,6 +43,10 @@ function App() {
         setContract(contract)
         setLoading(false)
     }
+
+    window.ethereum.on('accountsChanged', function (accounts) {
+        web3Handler();
+    })
     return (
         <div>
             <Stack gap={2} className="col-md-12 mx-auto">

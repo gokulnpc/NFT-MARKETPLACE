@@ -1,91 +1,91 @@
 import { useState } from "react";
-import { uploadFileToIPFS, uploadJSONToIPFS } from "../Pinata/pinata";
-import ABI from '../contract/ABI.json';
-
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
+import { NFTStorage } from "nft.storage";
+const APIKEY = process.env.REACT_APP_APIKEY;
 
-export default function SellNFT() {
+
+
+export default function SellNFT(props) {
     const [formParams, updateFormParams] = useState({ name: '', description: '', price: '' });
-    const [fileURL, setFileURL] = useState(null);
+
     const ethers = require("ethers");
+
     const [message, updateMessage] = useState('');
+    const [tokenURI, setTokenURI] = useState('');
+    const [uploadedFile, setUploadedFile] = useState();
+    const [check, setCheck] = useState(false)
 
     //This function uploads the NFT image to IPFS
     async function OnChangeFile(e) {
+        console.log("yep on work")
         var file = e.target.files[0];
-        //check for file extension
+        setUploadedFile(file);
+    }
+
+    const uploadNFTContent = async (inputFile) => {
+        const { name, description, price } = formParams;
+        console.log("name", name)
+        console.log("price", price)
+        console.log("description", description)
+
+        if (!name || !description || !price || !inputFile)
+            return;
+        console.log("conditions cleared")
+        const nftStorage = new NFTStorage({ token: APIKEY, });
+        try {
+            const metaData = await nftStorage.store({
+                name: name,
+                description: description,
+                price: price,
+                image: inputFile
+            });
+            setTokenURI(getIPFSGatewayURL(metaData.url));
+            return metaData;
+
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    const getIPFSGatewayURL = (ipfsURL) => {
+        let urlArray = ipfsURL.split("/");
+        let ipfsGateWayURL = `https://${urlArray[2]}.ipfs.dweb.link/${urlArray[3]}`;
+        return ipfsGateWayURL;
+    }
+
+    async function listNFT(e, file) {
+        e.preventDefault();
         try {
             //upload the file to IPFS
-            const response = await uploadFileToIPFS(file);
-            if (response.success === true) {
-                console.log("Uploaded image to Pinata: ", response.pinataURL)
-                setFileURL(response.pinataURL);
-            }
-        }
-        catch (e) {
-            console.log("Error during file upload", e);
-        }
-    }
-
-    //This function uploads the metadata to IPFS
-    async function uploadMetadataToIPFS() {
-        const { name, description, price } = formParams;
-        //Make sure that none of the fields are empty
-        if (!name || !description || !price || !fileURL)
-            return;
-
-        const nftJSON = {
-            name, description, price, image: fileURL
-        }
-
-        try {
-            //upload the metadata JSON to IPFS
-            const response = await uploadJSONToIPFS(nftJSON);
-            if (response.success === true) {
-                console.log("Uploaded JSON to Pinata: ", response)
-                return response.pinataURL;
-            }
-        }
-        catch (e) {
-            console.log("error uploading JSON metadata:", e)
-        }
-    }
-
-    async function listNFT(e) {
-        e.preventDefault();
-
-        //Upload data to IPFS
-        try {
-            const metadataURL = await uploadMetadataToIPFS();
-            //After adding your Hardhat network to your metamask, this code will get providers and signers
-            const provider = new ethers.providers.Web3Provider(window.ethereum);
-            const signer = provider.getSigner();
+            setCheck(true);
             updateMessage("Please wait.. uploading (upto 5 mins)")
+            const metaData = await uploadNFTContent(file);
+            console.log("onChange final url", getIPFSGatewayURL(metaData.url));
 
             //Pull the deployed contract instance
-            let contract = new ethers.Contract(ABI.address, ABI.abi, signer)
-
+            let contract = props.contract;
+            console.log("contract", contract);
+            console.log("price: ", formParams.price);
             //massage the params to be sent to the create NFT request
             const price = ethers.utils.parseUnits(formParams.price, 'ether')
             let listingPrice = await contract.getListPrice()
             listingPrice = listingPrice.toString()
 
             //actually create the NFT
-            let transaction = await contract.createToken(metadataURL, price, { value: listingPrice })
+            let transaction = await contract.createToken(getIPFSGatewayURL(metaData.url), price, { value: listingPrice })
             await transaction.wait()
 
             alert("Successfully listed your NFT!");
             updateMessage("");
             updateFormParams({ name: '', description: '', price: '' });
-            // window.location.replace("/")
         }
         catch (e) {
-            alert("Upload error" + e)
+            console.log("Error during file upload", e);
         }
+
     }
 
-    console.log("Working", process.env);
     return (
         <div>
             <Row className="justify-content-md-center text-white">
@@ -112,7 +112,11 @@ export default function SellNFT() {
                         </div>
                         <br></br>
                         <div class="text-green text-center">{message}</div>
-                        <button onClick={listNFT} class="btn btn-primary">List NFT</button>
+                        <br></br>
+                        <div class="d-grid gap-2">
+                            <button disabled={check} onClick={e => listNFT(e, uploadedFile)} class="btn btn-primary">List NFT {tokenURI}</button>
+                        </div>
+
                     </form>
                 </Col>
             </Row>
