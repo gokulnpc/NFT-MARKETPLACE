@@ -14,10 +14,15 @@ export default function Marketplace(props) {
         const items = await Promise.all(transaction.map(async i => {
             const tokenURI = await contract.tokenURI(i.tokenId);
 
-            let meta = await axios.get(tokenURI);
-            console.log("meta: " + meta);
+            console.log("token", tokenURI)
+            // let meta = await axios.get(tokenURI);
+            console.log("tokenURI", tokenURI)
+            let meta = await axios(tokenURI, {
+                method: 'GET',  // Sending a POST request
+                mode: 'cors'
+            });
             meta = meta.data;
-            console.log("meta: " + meta);
+            console.log("metadata: " + meta);
             let price = ethers.utils.formatUnits(i.price.toString(), 'ether');
             let item = {
                 price,

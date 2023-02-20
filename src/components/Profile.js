@@ -17,10 +17,13 @@ export default function Profile(props) {
 
         const items = await Promise.all(transaction.map(async i => {
             const tokenURI = await contract.tokenURI(i.tokenId);
-            let meta = await axios.get(tokenURI);
+
+            //change to token uri
+            let meta = await axios(tokenURI);
             meta = meta.data;
 
             let price = ethers.utils.formatUnits(i.price.toString(), 'ether');
+            console.log("price", Number(price))
             let item = {
                 price,
                 tokenId: i.tokenId.toNumber(),
@@ -33,7 +36,7 @@ export default function Profile(props) {
             sumPrice += Number(price);
             return item;
         }))
-
+        console.log("sum", sumPrice)
         updateData(items);
         updateFetched(true);
         updateAddress(props.account);

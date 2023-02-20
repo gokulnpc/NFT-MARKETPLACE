@@ -4,21 +4,28 @@ import { useState } from "react";
 import Button from 'react-bootstrap/Button';
 export default function NFTPage(props) {
 
-    const [data, updateData] = useState({});
+    const [data, updateData] = useState([]);
     const [dataFetched, updateDataFetched] = useState(false);
 
     const [message, updateMessage] = useState("");
+    const [own, setOwn] = useState(false);
     const [currAddress, updateCurrAddress] = useState("0x");
 
     async function getNFTData(tokenId) {
-        const ethers = require("ethers");
         let contract = props.contract;
-        //create an NFT Token
+
         const tokenURI = await contract.tokenURI(tokenId);
         const listedToken = await contract.getListedTokenForId(tokenId);
-        let meta = await axios.get(tokenURI);
+
+        //change to token uri
+        let meta = await axios(tokenURI, {
+            method: 'GET',  // Sending a POST request
+            mode: 'cors'
+        });
+
         meta = meta.data;
-        console.log(listedToken);
+        console.log("metadata", meta)
+        console.log("seller", listedToken.seller)
 
         let item = {
             price: meta.price,
@@ -29,9 +36,15 @@ export default function NFTPage(props) {
             name: meta.name,
             description: meta.description,
         }
-        console.log(item);
         updateData(item);
+        if (props.account.toLowerCase() == data.seller.toLowerCase() || props.account.toLowerCase() == data.seller.toLowerCase()) {
+            setOwn(true)
+        }
+
+        console.log("accc", props.account.toLowerCase())
+        console.log("seller", data.seller.toLowerCase())
         updateDataFetched(true);
+
     }
 
     async function buyNFT(tokenId) {
@@ -56,9 +69,48 @@ export default function NFTPage(props) {
     const tokenId = params.tokenId;
     if (!dataFetched)
         getNFTData(tokenId);
-    console.log(tokenId)
+
     return (
-        // <div style={{ "min-height": "100vh" }}>
+        <>
+            <center>
+                <div class="row row-cols-1 row-cols-md-1 g-4 mx-5 ">
+                    <div class="col">
+                        <div class="card h-100 w-50 ">
+                            <img src={data.image} class="card-img-top" />
+                            <div class="card-body text-left">
+                                <div>
+                                    <span className='text-info font-weight-bold'>Name:</span>{' '}{data.name}
+                                </div>
+                                <div>
+                                    <span className='text-info font-weight-bold'>Description:</span>{' '}{data.description}
+                                </div>
+                                <div>
+                                    <span className='text-info font-weight-bold'>Price:</span>{' '}{data.price + " ETH"}
+                                </div>
+                                <div>
+                                    <span className='text-info font-weight-bold'>Owner:</span>{' '}{data.owner}
+                                </div>
+                                <div>
+                                    <span className='text-info font-weight-bold'>Seller:</span>{' '}{data.seller}
+                                </div>
+                                <br />
+                                <div className="d-grid gap-2">
+                                    {own ?
+                                        <div className="font-weight-bold text-success">You are the owner of this NFT</div>
+                                        : <Button variant="primary" size="lg" onClick={() => buyNFT(tokenId)}>Buy this NFT</Button>
+                                    }
+                                    <div className="font-weight-bold">{message}</div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </center>
+        </>
+    )
+}
+// <div style={{ "min-height": "100vh" }}>
         //     <div className="flex ml-20 mt-20">
         //         <img src={data.image} alt="" className="w-2/5" />
         //         <div className="text-xl ml-20 space-y-8 text-white shadow-2xl rounded-lg border-2 p-5">
@@ -88,42 +140,3 @@ export default function NFTPage(props) {
         //         </div>
         //     </div>
         // </div>
-
-        <>
-            <center>
-                <div class="row row-cols-1 row-cols-md-1 g-4 mx-5 ">
-                    <div class="col">
-                        <div class="card h-100 w-50 ">
-                            <img src="https://gateway.pinata.cloud/ipfs/QmTsRJX7r5gyubjkdmzFrKQhHv74p5wT9LdeF1m3RTqrE5" class="card-img-top" />
-                            <div class="card-body text-left">
-                                <div>
-                                    <span className='text-info font-weight-bold'>Name:</span>{' '}{data.name}
-                                </div>
-                                <div>
-                                    <span className='text-info font-weight-bold'>Description:</span>{' '}{data.description}
-                                </div>
-                                <div>
-                                    <span className='text-info font-weight-bold'>Price:</span>{' '}{data.price + " ETH"}
-                                </div>
-                                <div>
-                                    <span className='text-info font-weight-bold'>Owner:</span>{' '}{data.owner}
-                                </div>
-                                <div>
-                                    <span className='text-info font-weight-bold'>Seller:</span>{' '}{data.seller}
-                                </div>
-                                <br />
-                                <div className="d-grid gap-2">
-                                    {currAddress == data.owner || currAddress == data.seller ?
-                                        <Button variant="primary" size="lg" onClick={() => buyNFT(tokenId)}>Buy this NFT</Button>
-                                        : <div className="font-weight-bold text-success">You are the owner of this NFT</div>
-                                    }
-                                    <div className="font-weight-bold">{message}</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </center>
-        </>
-    )
-}
