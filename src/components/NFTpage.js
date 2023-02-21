@@ -59,6 +59,12 @@ export default function NFTPage(props) {
             await transaction.wait();
             alert('You successfully bought the NFT!');
             updateMessage("");
+            if (props.account.toLowerCase() == data.seller.toLowerCase() || props.account.toLowerCase() == data.seller.toLowerCase()) {
+                setOwn(true)
+            }
+            else {
+                setOwn(false)
+            }
         }
         catch (e) {
             alert("Upload Error" + e)
