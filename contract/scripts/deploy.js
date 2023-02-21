@@ -11,7 +11,7 @@ async function main() {
     abi: JSON.parse(nftcontract.interface.format('json'))
   }
 
-  fs.writeFileSync(__dirname + '/../../client/src/contract/ABI.json', JSON.stringify(data))
+  fs.writeFileSync(__dirname + '/../../src/contract/ABI.json', JSON.stringify(data))
   console.log("NFT Marketplace deployed to:", nftcontract.address);
 }
 
